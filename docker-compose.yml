@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: alm-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: alm
+      POSTGRES_PASSWORD: alm
+      POSTGRES_DB: antibody_landscape
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U alm -d antibody_landscape"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  pgdata:
