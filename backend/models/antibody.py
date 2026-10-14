@@ -3,6 +3,7 @@ from datetime import datetime
 
 from sqlalchemy import (
     Boolean,
+    Index,
     DateTime,
     ForeignKey,
     Integer,
@@ -11,6 +12,7 @@ from sqlalchemy import (
     UniqueConstraint,
     func,
 )
+from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from models.base import Base, TimestampMixin, str_enum
@@ -19,14 +21,25 @@ from models.enums import ChainType, LiabilityKind, Severity
 
 class Antibody(TimestampMixin, Base):
     __tablename__ = "antibody"
+    __table_args__ = (
+        # Landscape filter: WHERE targets @> ARRAY['PD-1']
+        Index("ix_antibody_targets", "targets", postgresql_using="gin"),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True)
     # Normalized INN, e.g. "pembrolizumab". The join key to ClinicalTrials.gov.
     inn_name: Mapped[str] = mapped_column(String(120), unique=True, index=True)
     display_name: Mapped[str] = mapped_column(String(120))
-    target: Mapped[str] = mapped_column(String(120), index=True)
+    target: Mapped[str] = mapped_column(String(120), index=True)   # primary bucket, e.g. "PD-1"
+    # Every curated bucket the antibody hits. A PD-1 x HER2 bispecific is ["PD-1", "HER2"].
+    targets: Mapped[list[str]] = mapped_column(
+        ARRAY(String(40)), default=list, server_default="{}"
+    )
     format: Mapped[str | None] = mapped_column(String(120))          # e.g. "Whole mAb", "Bispecific"
     clinical_stage: Mapped[str | None] = mapped_column(String(60))   # current value, mirrors latest snapshot
+    # Orders landscape columns: 0 preclinical .. 5 approved; NULL = unknown.
+    stage_rank: Mapped[int | None] = mapped_column(Integer)
+    status: Mapped[str | None] = mapped_column(String(40))           # active / discontinued / unknown
     source_url: Mapped[str] = mapped_column(Text)
 
     chains: Mapped[list["Chain"]] = relationship(
