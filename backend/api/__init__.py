@@ -28,6 +28,8 @@ def create_app(session_factory: Callable[[], Session] | None = None) -> Flask:
     """
     app = Flask(__name__)
     app.json = ApiJSONProvider(app)
+    # Public deploys set ALLOW_WRITES=false: reads work, mark-seen returns 403.
+    app.config["ALLOW_WRITES"] = os.getenv("ALLOW_WRITES", "true").strip().lower() not in {"false", "0", "no"}
 
     if session_factory is None:
         from db import SessionLocal  # imported lazily: needs DATABASE_URL

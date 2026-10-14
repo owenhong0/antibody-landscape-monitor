@@ -7,12 +7,12 @@ from collections import defaultdict
 from datetime import datetime, timezone
 from typing import Any
 
-from flask import Blueprint, jsonify
+from flask import Blueprint, jsonify, current_app
 from sqlalchemy import func, select
 
 from api import serialize
 from api.database import get_db
-from api.errors import NotFound
+from api.errors import NotFound, APIError
 from api.params import bool_param, datetime_param, enum_list_param, int_param, str_param
 from models import Antibody, EntityType, PipelineRun, Signal, SignalKind, Trial, antibody_trial
 
@@ -76,6 +76,9 @@ def list_signals():
 
 @bp.post("/signals/<int:signal_id>/seen")
 def mark_seen(signal_id: int):
+    # Checked before the lookup, so read-only mode doesn't reveal which ids exist.
+    if not current_app.config["ALLOW_WRITES"]:
+        raise APIError(403, "This is a read-only demo: marking signals as seen is disabled.")
     db = get_db()
     signal = db.get(Signal, signal_id)
     if signal is None:

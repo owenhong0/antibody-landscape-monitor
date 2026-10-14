@@ -1,6 +1,7 @@
 # API
 flask>=3.0
 flask-cors>=4.0
+gunicorn>=23.0
 
 # Database
 sqlalchemy>=2.0
