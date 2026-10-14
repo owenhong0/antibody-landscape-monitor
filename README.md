@@ -5,6 +5,8 @@ antibody and clinical-trial data, analyzes every heavy and light chain for
 developability liabilities, detects what changed since the last run, and surfaces
 those changes as **sourced signals** in a dashboard.
 
+**Live demo:** https://antibody-landscape-monitor.vercel.app (read-only; the API may take ~30 s to wake up)
+
 **Stack:** Python · Flask · SQLAlchemy · PostgreSQL · AWS Step Functions · S3 · Next.js · TypeScript
 
 ---
