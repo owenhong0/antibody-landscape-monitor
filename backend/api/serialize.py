@@ -2,6 +2,7 @@
 YYYY-MM-DD, datetimes ISO 8601 in UTC."""
 import enum
 from datetime import date, datetime, timezone
+from pathlib import PurePath, PurePosixPath
 from typing import Any
 
 from flask.json.provider import DefaultJSONProvider
@@ -141,6 +142,16 @@ def signal(s: Signal, entity: dict[str, Any] | None = None) -> dict[str, Any]:
         "created_at": iso(s.created_at),
     }
 
+def public_path(raw: str | None) -> str | None:
+    """Drop the machine-specific prefix from a pipeline path:
+    '/Users/me/.../data/raw/5' -> 'data/raw/5'. Never expose local paths."""
+    if not raw:
+        return raw
+    parts = PurePath(raw).parts
+    if "data" in parts:
+        return str(PurePosixPath(*parts[parts.index("data"):]))
+    return PurePath(raw).name
+
 # --- pipeline runs ------------------------------------------------------------
 
 def run(r: PipelineRun) -> dict[str, Any]:
@@ -152,6 +163,6 @@ def run(r: PipelineRun) -> dict[str, Any]:
         "finished_at": iso(r.finished_at),
         "duration_seconds": round(duration, 2) if duration is not None else None,
         "counts": r.counts or {},
-        "raw_location": r.raw_location,
+        "raw_location": public_path(r.raw_location),
         "error": r.error,
     }

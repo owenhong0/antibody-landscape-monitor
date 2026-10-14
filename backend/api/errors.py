@@ -12,6 +12,7 @@ from werkzeug.exceptions import HTTPException
 
 CODES = {
     400: "bad_request",
+    403: "forbidden",
     404: "not_found",
     405: "method_not_allowed",
     500: "internal_error",
